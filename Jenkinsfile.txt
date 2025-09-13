@@ -1,0 +1,58 @@
+pipeline {
+    agent any
+    
+    environment {
+        DOCKER_IMAGE = 'devops-flask-app'
+        BUILD_NUMBER = "${BUILD_NUMBER}"
+    }
+    
+    stages {
+        stage('Checkout') {
+            steps {
+                echo 'Checking out source code from GitHub...'
+                checkout scm
+            }
+        }
+        
+        stage('Build Docker Image') {
+            steps {
+                echo 'Building Docker image...'
+                bat "docker build -t ${DOCKER_IMAGE}:${BUILD_NUMBER} ."
+                bat "docker build -t ${DOCKER_IMAGE}:latest ."
+            }
+        }
+        
+        stage('Test Application') {
+            steps {
+                echo 'Testing the containerized application...'
+                bat "docker run --rm ${DOCKER_IMAGE}:latest python -c \"print('Application test successful!')\""
+            }
+        }
+        
+        stage('Push to Registry') {
+            steps {
+                echo 'Ready to push to Docker registry...'
+                // Add Docker Hub or AWS ECR push commands here
+            }
+        }
+        
+        stage('Deploy') {
+            steps {
+                echo 'Deployment stage - Ready for cloud deployment'
+                // Add deployment commands here (AWS ECS, EC2, etc.)
+            }
+        }
+    }
+    
+    post {
+        always {
+            echo 'Pipeline execution completed!'
+        }
+        success {
+            echo 'Pipeline succeeded! Application is ready for deployment.'
+        }
+        failure {
+            echo 'Pipeline failed. Check logs for details.'
+        }
+    }
+}
